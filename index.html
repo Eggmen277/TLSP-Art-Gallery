@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telesheepy | Digital Art Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #000;
+            --accent-color: #7c3aed;
+            --text-light: #e2e8f0;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --transition: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: var(--text-light);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            transition: all 0.1s ease;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(124, 58, 237, 0.1);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 9998;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background: var(--glass-bg);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 15px 50px;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--accent-color), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Carousel */
+        .hero-carousel {
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            height: 100%;
+            display: flex;
+            transition: transform 0.8s var(--transition);
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .carousel-content {
+            position: absolute;
+            text-align: center;
+            z-index: 2;
+            animation: fadeInUp 1s ease;
+        }
+
+        .carousel-content h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .carousel-content p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .carousel-indicators {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 3;
+        }
+
+        .indicator {
+            width: 60px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .indicator.active {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .indicator::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: var(--accent-color);
+            animation: fillIndicator 5s linear;
+        }
+
+        .indicator.active::after {
+            animation: fillIndicator 5s linear;
+        }
+
+        @keyframes fillIndicator {
+            to {
+                width: 100%;
+            }
+        }
+
+        /* Gallery Section */
+        .gallery-section {
+            padding: 100px 50px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .section-header.animate {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-color), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            grid-auto-rows: 300px;
+        }
+
+        .bento-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.5s var(--transition);
+        }
+
+        .bento-item.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .bento-item:nth-child(1),
+        .bento-item:nth-child(6) {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .bento-item:nth-child(3),
+        .bento-item:nth-child(8) {
+            grid-row: span 2;
+        }
+
+        .bento-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s var(--transition);
+        }
+
+        .bento-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .bento-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 30px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bento-item:hover .bento-overlay {
+            opacity: 1;
+        }
+
+        .bento-overlay h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease 0.1s;
+        }
+
+        .bento-overlay p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transform: translateY(20px);
+            transition: transform 0.3s ease 0.2s;
+        }
+
+        .bento-item:hover .bento-overlay h3,
+        .bento-item:hover .bento-overlay p {
+            transform: translateY(0);
+        }
+
+        /* About Section */
+        .about-section {
+            padding: 100px 50px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), transparent);
+        }
+
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .about-content {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+
+        .about-content.animate {
+            animation: slideInLeft 0.8s ease forwards;
+        }
+
+        .about-content h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--accent-color), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .about-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--glass-bg);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(0);
+            transition: transform 0.5s var(--transition);
+        }
+
+        .stat-item.animate {
+            transform: scale(1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .about-image {
+            position: relative;
+            opacity: 0;
+            transform: translateX(50px);
+        }
+
+        .about-image.animate {
+            animation: slideInRight 0.8s ease forwards;
+        }
+
+        .about-image img {
+            width: 100%;
+            border-radius: 20px;
+            filter: grayscale(20%);
+        }
+
+        .floating-element {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--accent-color), #a78bfa);
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.5;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(2) {
+            top: 20%;
+            right: -50px;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(3) {
+            bottom: 20%;
+            left: -50px;
+            animation-delay: 4s;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        /* Footer */
+        footer {
+            padding: 50px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .social-links a {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--glass-bg);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: var(--accent-color);
+            transform: translateY(-5px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bento-item:nth-child(1),
+            .bento-item:nth-child(6) {
+                grid-column: span 1;
+            }
+
+            .about-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .about-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-content {
+            text-align: center;
+        }
+
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(124, 58, 237, 0.2);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p>Loading Telesheepy Gallery...</p>
+        </div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">TELESHEEPY</div>
+            <ul class="nav-links">
+                <li><a href="#home">HOME</a></li>
+                <li><a href="#gallery">GALLERY</a></li>
+                <li><a href="#about">ABOUT</a></li>
+                <li><a href="#contact">CONTACT</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Carousel -->
+    <section class="hero-carousel" id="home">
+        <div class="carousel-container" id="carouselContainer">
+            <div class="carousel-slide">
+                <img src="./assets/sheep1.jpg" alt="Telesheepy Art 1">
+                <div class="carousel-content">
+                    <h1>TELESHEEPY</h1>
+                    <p>A Digital Journey Through Surreal Landscapes</p>
+                </div>
+            </div>
+            <div class="carousel-slide">
+                <img src="./assets/sheep2.jpg" alt="Telesheepy Art 2">
+                <div class="carousel-content">
+                    <h1>ETHEREAL VISIONS</h1>
+                    <p>Where Dreams Meet Digital Reality</p>
+                </div>
+            </div>
+            <div class="carousel-slide">
+                <img src="./assets/sheep3.jpg" alt="Telesheepy Art 3">
+                <div class="carousel-content">
+                    <h1>COSMIC SHEEP</h1>
+                    <p>Transcending Boundaries of Imagination</p>
+                </div>
+            </div>
+        </div>
+        <div class="carousel-indicators">
+            <div class="indicator active" data-slide="0"></div>
+            <div class="indicator" data-slide="1"></div>
+            <div class="indicator" data-slide="2"></div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery-section" id="gallery">
+        <div class="section-header">
+            <h2>DIGITAL COLLECTION</h2>
+            <p>Explore the mystical world of Telesheepy through our curated gallery</p>
+        </div>
+        <div class="bento-grid">
+            <div class="bento-item">
+                <img src="./assets/sheep1.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Cosmic Dreams</h3>
+                    <p>A journey through stellar consciousness</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep2.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Digital Meadows</h3>
+                    <p>Where pixels bloom into infinity</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep3.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Neon Nights</h3>
+                    <p>Illuminated visions of tomorrow</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep4.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Quantum Leap</h3>
+                    <p>Breaking dimensional barriers</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep5.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Aurora Sheep</h3>
+                    <p>Northern lights in digital form</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep6.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Cyber Pastoral</h3>
+                    <p>Future meets nature</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep7.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Electric Dreams</h3>
+                    <p>Powered by imagination</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep8.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Prismatic Vision</h3>
+                    <p>Colors beyond the spectrum</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep9.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Digital Zen</h3>
+                    <p>Finding peace in pixels</p>
+                </div>
+            </div>
+            <div class="bento-item">
+                <img src="./assets/sheep10.jpg" alt="Telesheepy Art">
+                <div class="bento-overlay">
+                    <h3>Future Flock</h3>
+                    <p>Leading the digital revolution</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="about-container">
+            <div class="about-content">
+                <h2>About Telesheepy</h2>
+                <p>
+                    Telesheepy represents the convergence of digital art and surreal imagination. 
+                    Born from the depths of creative consciousness, this character embodies the 
+                    spirit of transformation in the digital age.
+                </p>
+                <p>
+                    Each piece in our collection tells a story of evolution, where traditional 
+                    boundaries dissolve into pixels and dreams manifest as digital reality. 
+                    Telesheepy is not just art; it's a movement towards a new aesthetic paradigm.
+                </p>
+                <p>
+                    Through vibrant colors, ethereal forms, and innovative techniques, we invite 
+                    you to explore a universe where sheep transcend their earthly form to become 
+                    cosmic entities of pure creative energy.
+                </p>
+                <div class="about-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Artworks Created</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">50K</div>
+                        <div class="stat-label">Global Collectors</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Possibilities</div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-image">
+                <div class="floating-element"></div>
+                <div class="floating-element"></div>
+                <img src="./assets/sheep5.jpg" alt="About Telesheepy">
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="social-links">
+            <a href="#" aria-label="Twitter">𝕏</a>
+            <a href="#" aria-label="Instagram">📷</a>
+            <a href="#" aria-label="Discord">💬</a>
+            <a href="#" aria-label="OpenSea">🌊</a>
+        </div>
+        <p>&copy; 2024 Telesheepy. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                cursorFollower.style.left = e.clientX - 10 + 'px';
+                cursorFollower.style.top = e.clientY - 10 + 'px';
+            }, 100);
+        });
+
+        // Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1500);
+        });
+
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Carousel
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const indicators = document.querySelectorAll('.indicator');
+        const carouselContainer = document.getElementById('carouselContainer');
+
+        function goToSlide(slideIndex) {
+            currentSlide = slideIndex;
+            carouselContainer.style.transform = `translateX(-${slideIndex * 100}%)`;
+            
+            indicators.forEach(indicator => indicator.classList.remove('active'));
+            indicators[slideIndex].classList.add('active');
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            goToSlide(currentSlide);
+        }
+
+        // Auto-play carousel
+        setInterval(nextSlide, 5000);
+
+        // Indicator clicks
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => goToSlide(index));
+        });
+
+        // Scroll-triggered animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    if (entry.target.classList.contains('bento-item')) {
+                        setTimeout(() => {
+                            entry.target.classList.add('animate');
+                        }, index * 100);
+                    } else if (entry.target.classList.contains('stat-item')) {
+                        setTimeout(() => {
+                            entry.target.classList.add('animate');
+                        }, index * 200);
+                    } else {
+                        entry.target.classList.add('animate');
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements
+        document.querySelectorAll('.section-header, .bento-item, .about-content, .about-image, .stat-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Parallax effect on scroll
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.carousel-content');
+            
+            parallaxElements.forEach(element => {
+                const speed = 0.5;
+                element.style.transform = `translateY(${scrolled * speed}px)`;
+            });
+        });
+
+        // Gallery item hover effect enhancement
+        document.querySelectorAll('.bento-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px)';
+                cursor.style.transform = 'scale(2)';
+                cursorFollower.style.transform = 'scale(1.5)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                cursor.style.transform = 'scale(1)';
+                cursorFollower.style.transform = 'scale(1)';
+            });
+        });
+
+        // Add magnetic effect to buttons and links
+        document.querySelectorAll('a, .indicator').forEach(elem => {
+            elem.addEventListener('mousemove', (e) => {
+                const rect = elem.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                
+                elem.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+            });
+            
+            elem.addEventListener('mouseleave', () => {
+                elem.style.transform = 'translate(0, 0)';
+            });
+        });
+
+        // Image lazy loading simulation
+        const imageElements = document.querySelectorAll('img');
+        imageElements.forEach(img => {
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.5s ease';
+            
+            img.addEventListener('load', function() {
+                this.style.opacity = '1';
+            });
+            
+            // Fallback for already loaded images
+            if (img.complete) {
+                img.style.opacity = '1';
+            }
+        });
+
+        // Add number counting animation for stats
+        function animateNumbers() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            
+            statNumbers.forEach(stat => {
+                const target = stat.innerText;
+                if (target === '∞') return;
+                
+                const targetNumber = parseInt(target.replace(/\D/g, ''));
+                const suffix = target.replace(/[0-9]/g, '');
+                let current = 0;
+                const increment = targetNumber / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= targetNumber) {
+                        stat.innerText = targetNumber + suffix;
+                        clearInterval(timer);
+                    } else {
+                        stat.innerText = Math.floor(current) + suffix;
+                    }
+                }, 30);
+            });
+        }
+
+        // Trigger number animation when stats section is visible
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                    entry.target.classList.add('counted');
+                    animateNumbers();
+                }
+            });
+        }, { threshold: 0.5 });
+
+        const aboutStats = document.querySelector('.about-stats');
+        if (aboutStats) {
+            statsObserver.observe(aboutStats);
+        }
+    </script>
+</body>
+</html>
